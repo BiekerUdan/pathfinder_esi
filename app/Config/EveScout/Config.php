@@ -11,8 +11,8 @@ class Config extends AbstractConfig {
      * @var array
      */
     protected static $spec = [
-        'wormholes' => [
-            'GET' => '/api/wormholes'
+        'signatures' => [
+            'GET' => 'v2/public/signatures'
         ]
     ];
 }
