@@ -12,28 +12,28 @@ class Connection extends AbstractIterator {
      */
     protected static $map = [
         'id'                                => 'id',
-        'type'                              => 'type',
+        'signature_type'                    => 'type',
+        'in_system_name'                    => 'name',
+        'completed'                         => ['state' => 'name'],
+        'updated_at'                        => ['state' => 'updated'],
 
-        'status'                            => ['state' => 'name'],
-        'statusUpdatedAt'                   => ['state' => 'updated'],
+        //Thera || Turner
+        'out_system_id'                     => ['source' => 'id'],
+        'out_system_name'                   => ['source' => 'name'],
+        'out_signature'                     => ['sourceSignature' => 'name'],
 
-        'sourceSolarSystem'                 => 'source',
-        'destinationSolarSystem'            => 'target',
+        //Connection
+        'in_system_id'                      => ['target' => 'id'],
+        'in_system_name'                    => ['target' => 'name'],
+        'in_signature'                      => ['targetSignature' => 'name'],
 
-        'signatureId'                       => ['sourceSignature' => 'name'],
-        'sourceWormholeType'                => ['sourceSignature' => 'type'],
+        
+        'expires_at'                        => ['wormhole' => 'estimatedEol'],
 
-        'wormholeDestinationSignatureId'    => ['targetSignature' => 'name'],
-        'destinationWormholeType'           => ['targetSignature' => 'type'],
+        'created_at'                        => 'created',
+        'updated_at'                        => 'updated',
 
-        'wormholeMass'                      => ['wormhole' => 'mass'],
-        'wormholeEol'                       => ['wormhole' => 'eol'],
-        'wormholeEstimatedEol'              => ['wormhole' => 'estimatedEol'],
-
-        'createdAt'                         => 'created',
-        'updatedAt'                         => 'updated',
-
-        'createdById'                       => ['character' => 'id'],
-        'createdBy'                         => ['character' => 'name']
+        'created_by_id'                     => ['character' => 'id'],
+        'created_by_name'                   => ['character' => 'name']
     ];
 }
