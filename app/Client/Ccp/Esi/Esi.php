@@ -829,29 +829,28 @@ class Esi extends Ccp\AbstractCcp implements EsiInterface {
      * @return RequestConfig
      */
     protected function getRouteRequest(int $sourceId, int $targetId, array $options = []) : RequestConfig {
-        $query = [];
+        // Prepare request body for POST (connections and avoid go in body, not query)
+        $body = [];
         if( !empty($options['avoid']) ){
-            $query['avoid'] = $options['avoid'];
+            $body['avoid'] = $options['avoid'];
         }
         if( !empty($options['connections']) ){
-            $query['connections'] = $options['connections'];
+            $body['connections'] = $options['connections'];
         }
+
+        // flag goes in query string
+        $query = [];
         if( !empty($options['flag']) ){
             $query['flag'] = $options['flag'];
         }
 
-        $query = $this->formatUrlParams($query, [
-            'connections' => [',', '|'],
-            'avoid' => [',']
-        ]);
-
-        $requestOptions = $this->getRequestOptions('', null, $query);
+        $requestOptions = $this->getRequestOptions('', $body, $query);
 
         // 404 'No route found' error -> should not be logged
         $requestOptions['log_off_status'] = [404];
 
         return new RequestConfig(
-            WebClient::newRequest('GET', $this->getEndpointURI(['routes', 'GET'], [$sourceId, $targetId])),
+            WebClient::newRequest('POST', $this->getEndpointURI(['routes', 'POST'], [$sourceId, $targetId])),
             $requestOptions,
             function($body) : array {
                 $routeData = [];
