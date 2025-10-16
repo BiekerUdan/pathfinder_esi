@@ -1,0 +1,4 @@
+#!/bin/bash
+# Run PHPUnit with PHP 7.4
+
+/usr/local/php74/bin/php -d pcre.jit=0 vendor/bin/phpunit "$@"

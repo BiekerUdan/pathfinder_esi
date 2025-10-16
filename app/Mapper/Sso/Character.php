@@ -16,8 +16,8 @@ class Character extends AbstractIterator {
      * @var array
      */
     protected static $map = [
-        'CharacterID'           => 'characterId',
-        'CharacterName'         => 'characterName',
+        'CharacterID'           => 'id',
+        'CharacterName'         => 'name',
         'CharacterOwnerHash'    => 'characterOwnerHash',
         'ExpiresOn'             => 'expiresOn',
         'Scopes'                => 'scopes',

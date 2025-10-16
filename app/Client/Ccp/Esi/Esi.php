@@ -40,6 +40,13 @@ class Esi extends Ccp\AbstractCcp implements EsiInterface {
     private $endpointVersion                        = '';
 
     /**
+     * ESI Compatibility date for new API features
+     * Format: YYYY-MM-DD (ISO 8601)
+     * @var string
+     */
+    private $esiCompatDate                          = '2025-09-30';
+
+    /**
      * @param string $dataSource
      */
     public function setDataSource(string $dataSource){
@@ -829,22 +836,19 @@ class Esi extends Ccp\AbstractCcp implements EsiInterface {
      * @return RequestConfig
      */
     protected function getRouteRequest(int $sourceId, int $targetId, array $options = []) : RequestConfig {
-        // Prepare request body for POST (connections and avoid go in body, not query)
-        $body = [];
+        // Prepare request body for POST (must always send a body, even if empty)
+        $body = new \stdClass();
         if( !empty($options['avoid']) ){
-            $body['avoid'] = $options['avoid'];
+            $body->avoid_systems = $options['avoid'];
         }
         if( !empty($options['connections']) ){
-            $body['connections'] = $options['connections'];
+            $body->connections = $options['connections'];
         }
-
-        // flag goes in query string
-        $query = [];
         if( !empty($options['flag']) ){
-            $query['flag'] = $options['flag'];
+            $body->preference = $options['flag'];
         }
 
-        $requestOptions = $this->getRequestOptions('', $body, $query);
+        $requestOptions = $this->getRequestOptions('', $body);
 
         // 404 'No route found' error -> should not be logged
         $requestOptions['log_off_status'] = [404];
@@ -855,7 +859,7 @@ class Esi extends Ccp\AbstractCcp implements EsiInterface {
             function($body) : array {
                 $routeData = [];
                 if(!$body->error){
-                    $routeData['route'] = array_unique(array_map('intval', (array)$body));
+                    $routeData['route'] = array_unique(array_map('intval', (array)$body->route));
                 }else{
                     $routeData['error'] = $body->error;
                 }
@@ -1096,6 +1100,12 @@ class Esi extends Ccp\AbstractCcp implements EsiInterface {
             // see: https://guzzle.readthedocs.io/en/latest/request-options.html#headers
             $options['headers'] = $this->getAuthHeader($accessToken, 'Bearer');
         }
+
+        // Add ESI compatibility date header for new API features
+        if(!isset($options['headers'])){
+            $options['headers'] = [];
+        }
+        $options['headers']['X-Compatibility-Date'] = $this->esiCompatDate;
 
         if(!empty($content)){
             // send content (body) is always Json

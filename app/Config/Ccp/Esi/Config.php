@@ -138,7 +138,7 @@ class Config extends AbstractConfig {
             ]
         ],
         'routes' => [
-            'POST' => '/v1/route/{x}/{x}/'
+            'POST' => '/route/{x}/{x}'
         ],
         'ui' => [
             'autopilot' => [
