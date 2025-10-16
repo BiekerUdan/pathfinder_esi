@@ -1,8 +1,8 @@
 {
-  "name": "MonoliYoda/pathfinder_esi",
+  "name": "BiekerUdan/pathfinder_esi",
   "description": "ESI API library for Pathfinder",
   "type": "library",
-  "homepage": "https://github.com/MonoliYoda/pathfinder_esi",
+  "homepage": "https://github.com/BiekerUdan/pathfinder_esi",
   "minimum-stability": "stable",
   "license": "MIT",
   "authors": [
@@ -15,12 +15,6 @@
     "optimize-autoloader": true,
     "lock": false
   },
-  "repositories": [
-    {
-      "type": "vcs",
-      "url": "https://github.com/MonoliYoda/pathfinder_esi"
-    }
-  ],
   "autoload": {
     "psr-4": {
       "Exodus4D\\ESI\\": "app/"
