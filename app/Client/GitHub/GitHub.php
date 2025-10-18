@@ -35,10 +35,14 @@ class GitHub extends Client\AbstractApi implements GitHubInterface {
             $requestOptions,
             function($body) : array {
                 $releasesData = [];
-                if(!$body->error){
-                    foreach((array)$body as $data){
+                // GitHub API returns array of releases, or object with error
+                if(is_array($body)){
+                    foreach($body as $data){
                         $releasesData[] = (new Mapper\GitHub\Release($data))->getData();
                     }
+                }elseif(is_object($body) && !isset($body->error)){
+                    // Single object (shouldn't happen but handle it)
+                    $releasesData[] = (new Mapper\GitHub\Release($body))->getData();
                 }
 
                 return $releasesData;
@@ -66,7 +70,10 @@ class GitHub extends Client\AbstractApi implements GitHubInterface {
             $requestOptions,
             function($body) : string {
                 $html = '';
-                if(!$body->error){
+                // GitHub markdown API returns HTML string or object with error
+                if(is_string($body)){
+                    $html = $body;
+                }elseif(is_object($body) && !isset($body->error)){
                     $html = (string)$body;
                 }
 

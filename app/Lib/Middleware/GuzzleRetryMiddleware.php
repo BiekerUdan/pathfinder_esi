@@ -12,7 +12,7 @@ namespace Exodus4D\ESI\Lib\Middleware;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
-class GuzzleRetryMiddleware extends \GuzzleRetry\GuzzleRetryMiddleware {
+class GuzzleRetryMiddleware {
 
     /**
      * default for: activate middleware "retry requests"
@@ -76,38 +76,33 @@ class GuzzleRetryMiddleware extends \GuzzleRetry\GuzzleRetryMiddleware {
     const DEFAULT_RETRY_LOG_FORMAT              = '[{attempt}/{maxRetry}] RETRY FAILED {method} {target} HTTP/{version} → {code} {phrase}';
 
     /**
-     * default options can go here for middleware
-     * @var array
-     */
-    private $defaultOptions = [
-        'retry_enabled'                         => self::DEFAULT_RETRY_ENABLED,
-        'max_retry_attempts'                    => self::DEFAULT_RETRY_MAX_ATTEMPTS,
-        'default_retry_multiplier'              => self::DEFAULT_RETRY_MULTIPLIER,
-        'retry_on_status'                       => self::DEFAULT_RETRY_ON_STATUS,
-        'retry_on_timeout'                      => self::DEFAULT_RETRY_ON_TIMEOUT,
-        'expose_retry_header'                   => self::DEFAULT_RETRY_EXPOSE_RETRY_HEADER,
-
-        'retry_log_error'                       => self::DEFAULT_RETRY_LOG_ERROR,
-        'retry_loggable_callback'               => self::DEFAULT_RETRY_LOGGABLE_CALLBACK,
-        'retry_log_callback'                    => self::DEFAULT_RETRY_LOG_CALLBACK,
-        'retry_log_file'                        => self::DEFAULT_RETRY_LOG_FILE,
-        'retry_log_format'                      => self::DEFAULT_RETRY_LOG_FORMAT
-    ];
-
-    /**
-     * GuzzleRetryMiddleware constructor.
-     * @param callable $nextHandler
+     * Factory method to create the middleware with custom configuration
      * @param array $defaultOptions
+     * @return \Closure
      */
-    public function __construct(callable $nextHandler, array $defaultOptions = []){
-        if($defaultOptions['retry_log_error']){
-            // add callback function for error logging
-            $defaultOptions['on_retry_callback'] = $this->retryCallback();
+    public static function factory(array $defaultOptions = []): \Closure {
+        // Merge defaults with provided options
+        $options = array_replace([
+            'retry_enabled'                         => self::DEFAULT_RETRY_ENABLED,
+            'max_retry_attempts'                    => self::DEFAULT_RETRY_MAX_ATTEMPTS,
+            'default_retry_multiplier'              => self::DEFAULT_RETRY_MULTIPLIER,
+            'retry_on_status'                       => self::DEFAULT_RETRY_ON_STATUS,
+            'retry_on_timeout'                      => self::DEFAULT_RETRY_ON_TIMEOUT,
+            'expose_retry_header'                   => self::DEFAULT_RETRY_EXPOSE_RETRY_HEADER,
+            'retry_log_error'                       => self::DEFAULT_RETRY_LOG_ERROR,
+            'retry_loggable_callback'               => self::DEFAULT_RETRY_LOGGABLE_CALLBACK,
+            'retry_log_callback'                    => self::DEFAULT_RETRY_LOG_CALLBACK,
+            'retry_log_file'                        => self::DEFAULT_RETRY_LOG_FILE,
+            'retry_log_format'                      => self::DEFAULT_RETRY_LOG_FORMAT
+        ], $defaultOptions);
+
+        // Add retry callback if logging is enabled
+        if($options['retry_log_error'] && !isset($options['on_retry_callback'])){
+            $options['on_retry_callback'] = self::getRetryCallback();
         }
 
-        $this->defaultOptions = array_replace($this->defaultOptions, $defaultOptions);
-
-        parent::__construct($nextHandler, $this->defaultOptions);
+        // Return the parent factory with our custom options
+        return \GuzzleRetry\GuzzleRetryMiddleware::factory($options);
     }
 
     /**
@@ -115,7 +110,7 @@ class GuzzleRetryMiddleware extends \GuzzleRetry\GuzzleRetryMiddleware {
      * @see https://packagist.org/packages/caseyamcl/guzzle_retry_middleware
      * @return callable
      */
-    protected function retryCallback() : callable {
+    protected static function getRetryCallback() : callable {
         return function(
             int $attemptNumber,
             float $delay,
@@ -138,7 +133,7 @@ class GuzzleRetryMiddleware extends \GuzzleRetry\GuzzleRetryMiddleware {
                         'delay'             => $delay
                     ];
 
-                    $message = $this->getLogMessage($options['retry_log_format'], $request, $attemptNumber, $options['max_retry_attempts'], $response);
+                    $message = self::getLogMessage($options['retry_log_format'], $request, $attemptNumber, $options['max_retry_attempts'], $response);
 
                     $log($options['retry_log_file'], 'critical', $message, $logData, 'warning');
                 }
@@ -154,7 +149,7 @@ class GuzzleRetryMiddleware extends \GuzzleRetry\GuzzleRetryMiddleware {
      * @param ResponseInterface|null $response
      * @return string
      */
-    protected function getLogMessage(string $message, RequestInterface $request, int $attemptNumber, int $maxRetryAttempts, ?ResponseInterface $response = null) : string {
+    protected static function getLogMessage(string $message, RequestInterface $request, int $attemptNumber, int $maxRetryAttempts, ?ResponseInterface $response = null) : string {
         $replace = [
             '{attempt}'     => $attemptNumber,
             '{maxRetry}'    => $maxRetryAttempts,

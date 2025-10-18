@@ -114,7 +114,7 @@ class GuzzleCacheMiddleware {
      * Will be called at the end of the script
      */
     public function purgeReValidation() : void {
-        \GuzzleHttp\Promise\inspect_all($this->waitingRevalidate);
+        \GuzzleHttp\Promise\Utils::settle($this->waitingRevalidate)->wait();
     }
 
     /**
@@ -159,7 +159,7 @@ class GuzzleCacheMiddleware {
         $minFreshCache  = null;
 
         if($request->hasHeader('Cache-Control')){
-            $reqCacheControl = \GuzzleHttp\Psr7\parse_header($request->getHeader('Cache-Control'));
+            $reqCacheControl = GuzzleCacheMiddleware::parseHeader($request->getHeader('Cache-Control'));
 
             if(GuzzleCacheMiddleware::inArrayDeep($reqCacheControl, 'only-if-cached')){
                 $onlyFromCache = true;
@@ -319,7 +319,7 @@ class GuzzleCacheMiddleware {
     protected static function addToCache(CacheStrategyInterface $cacheStrategy, RequestInterface $request, ResponseInterface $response, $update = false) : ResponseInterface {
         // If the body is not seekable, we have to replace it by a seekable one
         if(!$response->getBody()->isSeekable()){
-            $response = $response->withBody(\GuzzleHttp\Psr7\stream_for($response->getBody()->getContents()));
+            $response = $response->withBody(\GuzzleHttp\Psr7\Utils::streamFor($response->getBody()->getContents()));
         }
 
         if($update){
@@ -442,6 +442,34 @@ class GuzzleCacheMiddleware {
         $return = [];
         array_walk_recursive($array, function($value) use (&$return) {$return[] = $value;});
         return $return;
+    }
+
+    /**
+     * Parse HTTP header values into structured array
+     * Replacement for removed GuzzleHttp\Psr7\parse_header() function
+     * @param array $headers Array of header values from getHeader()
+     * @return array Parsed header directives
+     */
+    public static function parseHeader(array $headers) : array {
+        $result = [];
+
+        foreach($headers as $header){
+            $parts = [];
+            foreach(explode(',', $header) as $part){
+                $part = trim($part);
+                if(strpos($part, '=') !== false){
+                    list($key, $value) = explode('=', $part, 2);
+                    $parts[trim($key)] = trim($value, '" ');
+                }else{
+                    $parts[$part] = '';
+                }
+            }
+            if(!empty($parts)){
+                $result[] = $parts;
+            }
+        }
+
+        return $result;
     }
 
     /**

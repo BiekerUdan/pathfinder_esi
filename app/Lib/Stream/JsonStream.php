@@ -10,49 +10,33 @@ namespace Exodus4D\ESI\Lib\Stream;
 
 
 use GuzzleHttp\Psr7\StreamDecoratorTrait;
+use Psr\Http\Message\StreamInterface;
 
 class JsonStream implements JsonStreamInterface {
 
-    // we need to "overwrite" the default Trait getContents() method
-    // -> therefore we make it accessible as traitGetContents() and call it from
-    // the new getContents() method
-    use StreamDecoratorTrait {
-        StreamDecoratorTrait::getContents as traitGetContents;
-    }
+    use StreamDecoratorTrait;
 
     /**
-     * @return mixed|string|null
+     * @var StreamInterface
      */
-    public function getContents(){
-        $contents = $this->traitGetContents();
+    private StreamInterface $stream;
+
+    /**
+     * Get decoded JSON contents from stream
+     * @return mixed
+     */
+    public function getDecodedContents(): mixed {
+        $contents = $this->getContents();
 
         if($contents === ''){
             return null;
         }
-        $decodedContents = \GuzzleHttp\json_decode($contents);
+        $decodedContents = json_decode($contents);
 
         if(json_last_error() !== JSON_ERROR_NONE){
             throw new \RuntimeException('Error trying to decode response: ' . json_last_error_msg());
         }
 
         return $decodedContents;
-    }
-
-    /**
-     * we need to overwrite this because of Trait __toString() calls $this->Contents() which no longer returns a string
-     * @return string
-     */
-    public function __toString(){
-        try {
-            if($this->isSeekable()){
-                $this->seek(0);
-            }
-            return $this->traitGetContents();
-        }catch (\Exception $e){
-            // Really, PHP? https://bugs.php.net/bug.php?id=53648
-            trigger_error('StreamDecorator::__toString exception: '
-                . (string) $e, E_USER_ERROR);
-            return '';
-        }
     }
 }

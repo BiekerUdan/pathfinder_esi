@@ -39,7 +39,7 @@ class AbstractIterator extends \RecursiveArrayIterator {
      * @return array
      */
     public function getData(){
-        iterator_apply($this, 'self::recursiveIterator', [$this]);
+        iterator_apply($this, [self::class, 'recursiveIterator'], [$this]);
 
         return iterator_to_array($this, true);
     }
@@ -102,7 +102,7 @@ class AbstractIterator extends \RecursiveArrayIterator {
                     $iterator->is_assoc($iterator->current())
                 ){
                     // recursive call for child elements
-                    $iterator->offsetSet($iterator->key(), forward_static_call(array('self', __METHOD__), $iterator->getChildren())->getArrayCopy());
+                    $iterator->offsetSet($iterator->key(), static::recursiveIterator($iterator->getChildren())->getArrayCopy());
                     $iterator->next();
                 }elseif(is_array($mapValue)){
                     // a -> array mapping

@@ -233,7 +233,7 @@ class GuzzleLogMiddleware {
                 $this->log($options, $request, $response, $reason);
             }
 
-            return \GuzzleHttp\Promise\rejection_for($reason);
+            return \GuzzleHttp\Promise\Create::rejectionFor($reason);
         };
     }
 
@@ -429,10 +429,10 @@ class GuzzleLogMiddleware {
                 if(!($body instanceof JsonStreamInterface)){
                     // ... create temp JsonStream
                     $jsonBody = new JsonStream($body);
-                    $content = $jsonBody->getContents();
+                    $content = $jsonBody->getDecodedContents();
                 }else{
                     // ... already JsonStream -> get content
-                    $content = $body->getContents();
+                    $content = $body->getDecodedContents();
                 }
 
                 // ... check if "error" key exists in content, with error message
@@ -529,8 +529,8 @@ class GuzzleLogMiddleware {
      */
     protected function mergeOptions(array $options = [], array $optionsNew = []) : array {
         // array options must be merged rather than replaced
-        $optionsNew['log_on_status'] = array_unique(array_merge((array)$options['log_on_status'], (array)$optionsNew['log_on_status']));
-        $optionsNew['log_off_status'] = array_unique(array_merge((array)$options['log_off_status'], (array)$optionsNew['log_off_status']));
+        $optionsNew['log_on_status'] = array_unique(array_merge((array)($options['log_on_status'] ?? []), (array)($optionsNew['log_on_status'] ?? [])));
+        $optionsNew['log_off_status'] = array_unique(array_merge((array)($options['log_off_status'] ?? []), (array)($optionsNew['log_off_status'] ?? [])));
 
         return array_replace($options, $optionsNew);
     }
